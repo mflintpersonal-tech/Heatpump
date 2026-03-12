@@ -1,0 +1,83 @@
+/*   
+  Simple controller for Central Heating when comms are down - just does Zone 1 heating.
+*/
+
+let CONFIG = {
+  runFrequency: 10 * 60 * 1000,    // run every 10 minutes
+  pulseLag: 1.25 * 60 * 60,        // if not heard for little over 1 hour, then take control
+  dayStart: 8,                     // daytime starts at 08:00
+  dayEnd: 22,                      // daytime ends at 22:00
+  dayTarget: 20,                   // Daytime temperature target
+  nightTarget: 18,                 // Night temperature target
+  kvsMatch: "pulse_*",
+  kvsPulse: "pulse_time",
+  kvsTemperature: "pulse_temp"
+};
+
+var pulse_time;       // KVS pulse time value
+var pulse_temp;
+var heating = false;  // Whether to heat or not
+var runTimer = null;
+
+// callback used to receive the pulse time value from KVS
+function kvsCallback(res, error_code, error_msg, ud) {
+    if (error_code == 0) {
+        //print(res);
+        for (item of res['items']) {
+            if (item['key'] == CONFIG.kvsPulse) {pulse_time = item['value']}
+            if (item['key'] == CONFIG.kvsTemperature) {pulse_temp = item['value']}
+        };
+      
+        //print(pulse_time);
+        //print(pulse_temp);               
+        let now = Date.now();
+        let now_utc = Math.floor(now/1000);
+        let now_hour = new Date().getHours();
+        //print(now_utc);
+        //print(now_hour);
+
+        if ((now_utc - pulse_time) > CONFIG.pulseLag) {
+            heating = false
+            if ((now_hour >= CONFIG.dayStart) && (now_hour < CONFIG.dayEnd)) {
+                print('DAYTIME')
+                if (pulse_temp < CONFIG.dayTarget) {heating = true}
+            } else {
+                print('NIGHT')
+                if (pulse_temp < CONFIG.nightTarget) {heating = true}  
+            }
+            /* set heating on or off */
+            print('Setting heating ' + heating)
+            Shelly.call("Switch.Set",
+                        { id: 0,          /* 0 => Zone 1 */
+                          on: heating }
+                        );
+            
+        }; 
+        
+    } else {
+        print('failed');
+        print(error_code);
+        print(error_msg);
+    };
+}
+
+// time for running every hour
+function startTimer() {
+  runTimer = Timer.set(CONFIG.runFrequency,
+                       true,
+                       function (ud) {
+                                      main();
+                                     },
+                       null
+                      );
+}
+
+function main() {
+    Shelly.call("KVS.GetMany",
+                { key: CONFIG.kvsMatch },
+                kvsCallback
+               );
+}; 
+
+startTimer();
+
