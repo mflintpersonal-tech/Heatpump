@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class='container-fluid'>
+  <div class='row g-2'>
+    <div class='col-md mt-3'>
+      <div class='card bg-light'>
+        <div class='card-body'>
+          <h2 class='card-title'>Command History</h2>
+          <p class='card-text'>These are the latest set of created commands issued to the Heat Pump over the RS485 interface.</p>
+          <div class='table-scrollable'>
+            <table class='table table-fixed table-sm table-striped table-bordered caption-top'>
+             {% set keys = ['created', 'command', 'values', 'not_before', 'not_after', 'status', 'executed', 'result'] %}
+              <thead class='sticky-top'>
+                <tr>
+                 {% for k in keys %}
+                  <th>{{ k|capitalize }}</th>
+                 {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+               {% for r in commands %}
+                <tr>
+                 {% for k in keys %}
+                  {% if k == 'values' %}
+                   <td>{{ r[k]|space_nbsp }}</td>
+                  {% elif k == 'status' %}
+                   <td>{{ r[k]|status_show }}</td>
+                  {% else %}
+                   <td>{{ r[k]|capitalize }}</td>
+                  {% endif %}
+                 {% endfor %}
+                </tr>
+               {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class='container-fluid'>
+  <div class='row g-2'>
+    <div class='col-md mt-3'>
+      <div class='card bg-light'>
+
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link" href="/performance">Performance</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" aria-current="page" href="/performance/cost">Cost</a>
+  </li>
+</ul>
+
+        <div class='card-body'>
+          <h2 class='card-title'>Energy Costs</h2>
+          <p class='card-text'>Select a tariff and year below to see the costs that would have been incurred for that tariff.<br /><strong>Note: </strong>Cost breakdown includes a fixed kWh for non-heat pump usage (set to 2200kWh currently).</p>
+          <form action='/performance/cost' method='get'>
+            <div class="row mb-1">
+              <div class="col-sm-4">
+               <div class="row">
+                <div class="col-sm-3 text-end">
+                 <label for="tariffId" class="col-form-label">Tariff</label>
+                </div>
+                <div class="col-sm-9">
+                  <select class="form-select" name='tariff' id="tariffId" aria-label="Tariff selection" onChange="this.form.submit()">
+                   {% for t in tariffs.values() %}
+                    <option value="{{ t['id'] }}" {{ 'selected' if tariff==t['id'] }} >{{ t['description'] }}</option>
+                   {% endfor %}
+                  </select>
+                </div>
+               </div>
+               <div class="row">
+                <div class="col-sm-3 text-end">
+                  <label for="tariffId" class="col-form-label">Year</label>
+                </div> 
+                <div class="col-sm-3">
+                  <select class="form-select" id="yearId" name='year' aria-label="Year selection" onChange="this.form.submit()">
+                   {% for yr in range(2023, nextyear) %}
+                    <option value="{{ yr }}" {{ 'selected' if year==yr }} >{{ yr }}</option>
+                   {% endfor %}
+                  </select>
+                </div>
+               </div>
+              </div>
+
+              <div class="col-sm-6">
+                <span class="align-text-top">{{ output|safe }}
+                <br/>Standing Charge: {{ (tariffs[tariff]['standing_charge']/10000)|perf_figure }} pence per day.&nbsp;Exit fee £{{ tariffs[tariff]['exit_fee'] }}.
+                </span>
+              </div>
+            </div>
+          </form>
+          <div class="row justify-content-center">
+            <div class="col-7">
+              <div id='costContainer' class='table-scrollable table-scrollable-short'>
+                <table id='costs' class='table table-fixed table-sm table-striped table-bordered'>
+                 {% set keys = ['Energy Consumed (kWh)', 'Cost of Energy (£)', 'Standing Charge', 'Total (£)'] %}
+                  <thead class='sticky-top'>
+                    <tr>
+                     <th>Month</th>
+                     {% for k in keys %}
+                      <th class="text-end">{{ k }}</th>
+                     {% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                   {% for c in costs[:-1] %}
+                    <tr>
+                      <td>{{ c['month'] }}</td>
+                      <td class="text-end">{{ (c['energy']/100)|perf_figure }}</td>
+                      <td class="text-end">{{ (c['cost']/100)|perf_figure }}</td>
+                      <td class="text-end">{{ (c['standing']/100)|perf_figure }}</td>
+                      <td class="text-end">{{ (c['total']/100)|perf_figure }}</td>
+                    </tr>
+                   {% endfor %}
+                    <tr>
+                      <td><strong>TOTAL</strong></td>
+                      <td class="text-end">{{ (costs[-1]['energy']/100)|perf_figure }}</td>
+                      <td class="text-end">{{ (costs[-1]['cost']/100)|perf_figure }}</td>
+                      <td class="text-end">{{ (costs[-1]['standing']/100)|perf_figure }}</td>
+                      <td class="text-end"><strong>{{ (costs[-1]['total']/100)|perf_figure }}<strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// scroll to the end of the costs table
+var rowpos = $('#costs tr:last').position();
+$('#costContainer').scrollTop(rowpos.top);
+
+// make last three row, first cell, right-align text
+$("#costs tr:nth-last-of-type(-n + 3) td:first-child").css('text-align', 'right');
+
+</script>
+
+{% endblock content %}

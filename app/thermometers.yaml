@@ -1,0 +1,107 @@
+###############################################################
+#                                                             #
+# MUST BE KEPT IN STEP WITH heatpump/thermometers.yaml on PiW #
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #
+# By this, it means anything in the PiW copy must reflect the #
+# govee ones here, and vice versa.                            #
+#                                                             #
+###############################################################
+
+# Mapping from thermoter MAC to attributes. Key must be MAC address if type is not 'parameter'
+#
+# type       : govee/switchbot/parameter  :: how to interpret the data
+# protocol   : ble/http/monitor           :: how data is gathered (over ble broadcast, http POST, monitor data)
+# name       : friendly name of device
+# show       : yes/no                     :: whether there's a guage for this thermometer on the Controller web-page
+# location   : inside/outside
+# zone       : CH Zone located in
+# weight     : 0-1                        :: fraction of weight used to calculate location (or location/zone) temperature
+# adjust     : +/- 0-10                   :: amount (x10) of °C to adjust returned temp by (for thermometer local variation compensation)
+# temperature/humidity : where in the monitor data gathered values will be stored
+#
+# Main room
+A4C13836B444:
+ type:        'govee'
+ protocol:    'ble'
+ name:        'Lounge'
+ show:        'yes'
+ location:    'inside'
+ zone:        1
+ weight:      1.0
+ adjust:      2
+ temperature: '99 01'
+ humidity:    '01 35'
+# Guest bedroom
+A4C1388C9335:
+ type:        'govee'
+ protocol:    'ble'
+ name:        'Guest Bedroom'
+ show:        'yes'
+ location:    'inside'
+ zone:        1
+ weight:      0.0
+ temperature: '99 03'
+ humidity:    '99 04'
+# Utility
+D634C4C63E9A:
+ type:        'switchbot'
+ protocol:    'http'
+ name:        'Utility'
+ show:        'yes'
+ location:    'inside'
+ zone:        1
+ temperature: '99 05'
+ humidity:    '99 06'
+# Upstairs bedroom
+D634C606702E:
+ type:        'switchbot'
+ protocol:    'ble'
+ name:        'Master Bedroom'
+ show:        'yes'
+ location:    'inside'
+ zone:        2
+ adjust:      0                  # 0.2C adjustment on device via Switchbot app
+ temperature: '99 02'
+ humidity:    '99 14'
+
+# Outside switchbot thermometer
+D43535307339:
+ type:        'switchbot'
+ protocol:    'ble'
+ name:        'Outside'
+ show:        'no'
+ location:    'outside'
+ weight:      0.75
+ temperature: '01 32'
+ humidity:    '99 13'
+# Outside HP sensor
+HPPARAMETER6:
+ type:        'parameter'
+ protocol:    'monitor'
+ name:        'HP Sensor'
+ show:        'no'
+ location:    'outside'
+ weight:      0.25
+ temperature: '01 06'
+
+# OLD ONES NO LONGER USED 
+# # Utility
+# A4C1385E3304:
+#  type:        'govee'
+#  protocol:    'ble'
+#  name:        'Utility'
+#  show:        'yes'
+#  location:    'inside'
+#  zone:        1
+#  temperature: '99 05'
+#  humidity:    '99 06'
+# # Upstairs bedroom
+# A4C138A09F9A:
+#  type:        'govee'
+#  protocol:    'ble'
+#  name:        'Master Bedroom'
+#  show:        'yes'
+#  location:    'inside'
+#  zone:        2
+#  temperature: '99 02'
+#  humidity:    '99 14'

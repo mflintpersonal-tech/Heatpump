@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+#controls thead tr:first-child th:first-child, td:first-child, caption
+{
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+#controls thead tr:first-child th:nth-child(2), td:nth-child(2)
+{
+  position: sticky;
+  left: 5.6em;
+  z-index: 2;
+}
+</style>
+
+<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+
+<div class='container-fluid'>
+  <div class='row g-2'>
+    <div class='col-md mt-3'>
+      <div class='card bg-light'>
+        <div class='card-body'>
+          <div class="d-flex justify-content-center" id="wccButton" style="top: 24px; position: absolute; left: 40vw;">
+           <form>
+            <button type="button" class="btn btn-primary" id="wccButton">
+              Show WC Curve
+            </button>
+           </form>
+          </div>
+          <h2 class='card-title'>Control Parameters</h2>
+          <p class='card-text'>These are the subset of Parameters which influence the operation of the Grant.
+            <br/><small>Last checked: {{ latest }}</small>
+          </p>
+          <div id='controls' class='table-scrollable'>
+            <table class='table table-fixed table-sm table-striped table-bordered caption-top'>
+              <thead class='sticky-top'>
+                <tr>
+                  <th rowspan=1 style="min-width:5.6em;">Parameter</th>
+                  <th rowspan=1 style="min-width:40vw;">Description</th>
+                  <!-- th colspan={{ values.keys()|length }} style="text-align: center">Values</th -->
+                  <!-- th colspan=5 style="text-align: center">Values</th -->
+                  <!-- th colspan=15 >&nbsp;</th -->
+                <!--/tr -->
+                <!--tr -->
+                 {% for d in values.keys() %}
+                  <th style="min-width:6vw;" title='{{ d }}'>{{ d | truncate(10,True,'',0) }}</th>
+                 {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+               {% for r in controls %}
+                <tr>
+                  <td>{{ r['id'] }}</td>
+                  <td>{{ r['description'] }}</td>
+                  {% for d in values.keys() %}
+                   {% if r['id'] in values[d] %}
+                    <td>{{ values[d][r['id']] }}</td>
+                   {% else %}
+                    <td> </td>
+                   {% endif %}
+                  {% endfor %}
+                </tr>
+               {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div id="myModalWCC" class="modal fade" tabindex="-1" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+              <div class="modal-content">
+               <form action="/ws_update_holidays" method="post">
+                <div class="modal-header">
+                  <h5 class="modal-title">Weather Compensation Curve</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+      
+                  <div class='row'>
+                    <div class='col'>
+                      <div class='graphics' style='position: relative; height:68vh; width:48vw'>
+                        <canvas id='mycanvas'></canvas>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+               </form>
+              </div>
+            </div>
+          </div>
+
+        </div> 
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var myLineChart;
+  var myModalWCC = new bootstrap.Modal(document.getElementById('myModalWCC'), {focus: true});
+
+  $("#wccButton").on("click", "button", function(){
+      myModalWCC.show();
+  });
+
+
+  //function initChart() {
+    let ctx = document.querySelector('canvas').getContext('2d');
+
+    myLineChart = new Chart(ctx, {
+      options: { response: true,
+                 maintainAspectRatio: false,
+                 scales: {
+                           x: {
+                               title: {
+                                       display: true,
+                                       text: 'Outside Temperature'
+                                      }
+                              },
+                           y: {
+                               min: 0,
+                               max: 60,
+                               title: {
+                                       display: true,
+                                       text: 'Leaving Water Temperature'
+                                      }
+                              }
+                         }
+               }, 
+      type: 'line',
+      title: {
+              display: true,
+              text: 'Weather Compensation Curve'
+      },
+      data: {
+             labels: [{{ exts|join(',') }}],
+             datasets: [{
+                         label: 'Target LWT',
+                         data: [{{ lwts|join(',') }}],
+                         borderColor: 'blue',
+                         fill: false,
+                         spanGaps: true,
+                         animations: true
+                       }]
+      }
+    });
+  //}
+  
+</script>
+
+{% endblock content %}

@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<script src="static/js/jquery.tablesorter.min.js"></script>
+<script src="static/js/jquery.tablesorter.widgets.js"></script>
+<!-- TODO not sure why this css is needed as 5.3 is loaded from layout.html -->
+<link rel="stylesheet" href="static/css/theme.bootstrap_4.min.css">
+
+<div class='container-fluid'>
+  <div class='row g-2'>
+    <div class='col-md mt-3'>
+      <div class='card bg-light'>
+
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link active" aria-current="page" href="#">Performance</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/performance/cost">Cost</a>
+  </li>
+</ul>
+
+        <div class='card-body'>
+          <form action="/performance" method="get">
+            <div class="row">
+              <div class="col-sm-2">
+               <label for="periodId" class="col-form-label">Show</label>
+              </div>
+              <div class="col-sm-2">
+                <select class="form-select" name='period' id="periodId" aria-label="Period selection" onChange="this.form.submit()">
+                 {% for p in [30, 180, 360] %}
+                  <option value="{{ p }}" {{ 'selected' if p == request.values['period'] }} >{{ p }}</option>
+                 {% endfor %}
+                </select>
+                days
+              </div>
+            </div>
+            <div class="row">
+              <div class="d-flex justify-content-end" style="height: 0px;top: 16px;right: 54px; position:relative;">
+                <button type="button" class="btn btn-primary" onClick="this.form.submit()">
+                  <input type="hidden" name="download" value="yes">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"></path>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"></path>
+                  </svg>
+                  Download
+                </button>
+              </div>
+            </div>
+          </form>
+          <div class="row">
+            <h2 class='card-title'>Performance Figures</h2>
+            <p class='card-text'>Estimated values for energy consumption and generation. COP for last month/3 months/6 months/all-time = {{ scop }}.</p>
+            <div class='table-scrollable'>
+              <table class='table table-fixed table-sm table-striped table-bordered caption-top'>
+               {% set keys = ['Date', 'Energy Consumed (kWh)', 'Energy Produced (kWh)', 'COP', 'Average IAT (°C)', 'Average Operating Outdoor Temp (°C)', 'Average Outdoor Temp (°C)'] %}
+                <thead class='sticky-top'>
+                  <tr>
+                   {% for k in keys %}
+                    <th>{{ k }}</th>
+                   {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                 {% for r in data %}
+                  <tr {% if r['date'] == today %}class='table-primary'{% endif %} onClick="window.location='/monitor?performance_date={{ r['date'] }}'">
+                     <td>{{ r['date'] }}</td>
+                     <td><span style="display:block;width:48px;text-align:right">{{ r['in']|perf_figure }}</span></td>
+                     <td><span style="display:block;width:50px;text-align:right">{{ r['out']|perf_figure }}</span></td>
+                     <td>{{ r['cop'] }}</td>
+                     <td>{{ r['iat'] }}</td>
+                     <td>{{ r['aoot'] }}</td>
+                     <td>{{ r['oat'] }} ±{{ r['std'] }}</td>
+                  </tr>
+                 {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div> 
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $("table").tablesorter({
+      theme : "bootstrap",
+
+      widthFixed: true,
+
+      // widget code contained in the jquery.tablesorter.widgets.js file
+      // use the zebra stripe widget if you plan on hiding any rows (filter widget)
+      // the uitheme widget is NOT REQUIRED!
+      //widgets : [ "filter", "columns", "zebra" ],
+      widgets : [ "columns", "zebra" ],
+
+      // default sortInitialOrder setting
+      sortInitialOrder: "asc",
+
+      // pass the headers argument and passing a object
+      headers: {
+                0: { sortInitialOrder: 'desc' },
+                1: { sortInitialOrder: 'desc' },
+                2: { sortInitialOrder: 'desc' }
+               },
+      sortList: [[0,1]]
+
+  })
+
+  // bind to sort events
+  $("table")
+    .bind("sortEnd",function(e, table) {
+      //$('tr.table-primary').addClass("table-primary");
+      $('tr.table-primary').removeClass("odd even");
+    });
+  
+</script>
+
+{% endblock content %}

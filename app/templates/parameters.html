@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    <div class='container-fluid'>
+      <div class='row g-2'>
+        <div class='col-md mt-3'>
+          <div class='card bg-light'>
+            <div class='card-body'>
+              <h2 class='card-title'>Parameters</h2>
+              <p class='card-text'>These are the parameters which are exposed over the Grant RS485 interface.</p>
+              <div class='table-scrollable'>
+                <table class='table table-fixed table-sm table-striped table-bordered'>
+                  <thead class='sticky-top'>
+                    <tr>
+                    {% for keys in g.parameters[0].keys() %}
+                      <th>{{ keys|capitalize }}</th>
+                    {% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in g.parameters %}
+                    <tr class='clicky'>
+                     {% for k, v in row.items() %}
+                      {% if k == 'id' %}
+                      <td>{{ v|space_nbsp }}</td>
+                      {% else  %}
+                      <td>{{ v|parm_show(k) }}</td>
+                      {% endif %}
+                     {% endfor %}
+                    {% endfor %}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div id="myModal" class="modal fade" tabindex="-1" style="display: none;" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="formTitle">Parameter XX XX</h5>
+                    <span id="formInfo" class="text-info">xx</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form action="/ws_update_parms" method="post">
+                      <input type="hidden" name="id" id="parameter" value="x">
+                      <div class="mb-3">
+                        <label for="formDescription" class="form-label">Description</label>
+                        <input type="text" class="form-control" name='description' id="formDescription" placeholder="Description of parameter">
+                      </div>
+                      <div class="mb-3">
+                        <label for="formColour" class="form-label">Colour</label>
+                        <input type="text" class="form-control" name='colour' id="formColour" placeholder="Colour to use">
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-primary" onClick="form.submit()">Save changes</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      var myModal = new bootstrap.Modal(document.getElementById('myModal'), {focus: true});
+      $('tr.clicky').click(function(){
+        let id = $(this).find('td:nth-child(1)');
+        let description = $(this).find('td:nth-child(2)');
+        let reg = $(this).find('td:nth-child(3)').html();
+        let typ = $(this).find('td:nth-child(4)').html();
+        let colour = $(this).find('td:nth-child(7)');
+        $('#formInfo').html('&nbsp;(' + typ + ' Register ' + reg + ')');
+        $('#parameter').val(id.html().replace('&nbsp;',' '));
+        $('#formTitle').html('Parameter ' + id.html());
+        $('#formDescription').val(description.html());
+        $('#formColour').val(colour.html());
+        myModal.show();
+      });
+    </script>
+
+{% endblock content %}

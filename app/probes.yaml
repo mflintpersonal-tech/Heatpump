@@ -1,0 +1,11 @@
+# Details of (thermal) probes that are monitored (locally over http requests to the attached Shelly device)
+PROBE1:
+ name:        'Outgoing Water Temperature'
+ adjust:      0                           # Not used currently
+ temperature: '11 09'
+ monitor:     true                        # NOTE: true or yes converts to 'True' object on loading!
+PROBE2:
+ name:        'Return Water Temperature'
+ adjust:      0                           # Not used currently
+ temperature: '11 00'
+ monitor:     true

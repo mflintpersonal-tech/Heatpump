@@ -1,0 +1,162 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<script src="static/js/jquery.tablesorter.min.js"></script>
+<script src="static/js/jquery.tablesorter.widgets.js"></script>
+<!-- TODO not sure why this css is needed as 5.3 is loaded from layout.html -->
+<link rel="stylesheet" href="static/css/theme.bootstrap_4.min.css">
+
+<div class='container-fluid'>
+  <div class='row g-2'>
+    <div class='col-md mt-3'>
+      <div class='card bg-light'>
+
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link active" aria-current="page" href="#">Performance</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/performance/cost">Cost</a>
+  </li>
+</ul>
+
+        <div class='card-body'>
+          <div class="d-flex justify-content-end" style="height: 0px;top: 16px;right: 54px; position:relative;">
+            <form action="/performance" method="get">
+              <button type="button" class="btn btn-primary" onClick="this.form.submit()">
+                <input type="hidden" name="download" value="yes">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"></path>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"></path>
+                </svg>
+                Download
+              </button>
+            </form>
+          </div>
+          <h2 class='card-title'>Performance Figures</h2>
+          <p class='card-text'>Estimated values for energy consumption and generation. COP for last month/3 months/6 months/all-time = {{ scop }}.</p>
+
+          <div>
+            <div class="row m-0">
+              <div class="col-md-auto">
+                <div class="d-flex">
+                  <label for="periodId" class="col-form-label">Show</label>
+                  <select class="form-control form-select" style="margin: 0 5px" name='period' id="periodId" aria-label="Period selection" onChange="paging('start')">
+                    {% for p in [30, 180, 360] %}
+                     <option value="{{ p }}" {{ 'selected' if p == default_period }} >{{ p }}</option>
+                    {% endfor %}
+                  </select>
+                  <span class="col-form-label">days</span>
+                </div>
+              </div>
+              <div class="col-md-auto">
+                <button type="button" class="btn" onClick="paging('back');">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" fill="currentColor" class="bi bi-arrow-down-circle fs-4" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293z"/>
+                  </svg>
+                </button>
+                &nbsp;
+                <button type="button" class="btn" onClick="paging('forward');">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" fill="currentColor" class="bi bi-arrow-up-circle fs-4" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-7.5 3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class='table-scrollable'>
+            <table class='table table-fixed table-sm table-striped table-bordered caption-top'>
+             {% set keys = ['Date', 'Energy Consumed (kWh)', 'Energy Produced (kWh)', 'COP', 'Average IAT (°C)', 'Average Operating Outdoor Temp (°C)', 'Average Outdoor Temp (°C)'] %}
+              <thead class='sticky-top'>
+                <tr>
+                 {% for k in keys %}
+                  <th>{{ k }}</th>
+                 {% endfor %}
+                </tr>
+              </thead>
+              <tbody id="tableData">
+               {% include 'performance_table.html' %}
+              </tbody>
+            </table>
+          </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var dates;
+
+  $("table").tablesorter({
+      theme : "bootstrap",
+
+      widthFixed: true,
+
+      // widget code contained in the jquery.tablesorter.widgets.js file
+      // use the zebra stripe widget if you plan on hiding any rows (filter widget)
+      // the uitheme widget is NOT REQUIRED!
+      //widgets : [ "filter", "columns", "zebra" ],
+      widgets : [ "columns", "zebra" ],
+
+      // default sortInitialOrder setting
+      sortInitialOrder: "asc",
+
+      // pass the headers argument and passing a object
+      headers: {
+                0: { sortInitialOrder: 'desc' },
+                1: { sortInitialOrder: 'desc' },
+                2: { sortInitialOrder: 'desc' }
+               },
+      sortList: [[0,1]]
+
+  })
+
+  // bind to sort events - this highlights "today's" row, somehow
+  $("table")
+    .bind("sortEnd",function(e, table) {
+      //$('tr.table-primary').addClass("table-primary");
+      $('tr.table-primary').removeClass("odd even");
+    });
+
+  // grab all the dates in the table, as 'numbers' only e.g. 20250828
+  function collectDates(){
+    dates = [];
+    $("#tableData tr").each(function( index, element ) {
+      var td = element.cells[0].innerHTML;
+      dates.push(td.replace(/-/g,''));      
+    });
+  };
+  
+  function paging(direction) {
+
+    let period = $("select[name='period']").val();
+
+    let first = '';
+    // the 'first' variable is the starting point for the next page - use the date, but the table might be sorted by another field,
+    // hence the use of min/max to find it
+    if (direction == 'back') {
+        collectDates();
+        first = Math.min(...dates);
+    } else {
+        collectDates();
+        first = Math.max(...dates);
+        /*first = $("#tableData tr:first td:first").text(); */
+    };
+
+    $.get( "/ws/performance", {start:first, period:period, direction:direction}, function(html) {
+      $("#tableData").html(html);
+      $("table").trigger("update");
+      $('tr.table-primary').removeClass("odd even");
+    });
+
+    // load up the initial page of data
+
+  }
+  paging('start');
+
+</script>
+
+{% endblock content %}
