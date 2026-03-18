@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+ <head>
+  <title>Home</title>
+  <meta content='NOINDEX, NOFOLLOW' name='robots'>
+ </head>
+<body>
+ <p>Enter user and password</p>
+ <div>
+  <form action='/logon' method='post'>
+   <table>
+     <tr>
+      <td>User</td>
+      <td>
+       <input autofocus name='user' tabindex='100' type='text' value=''>
+      </td>
+    </tr>
+    <tr>
+     <td>Password</td>
+     <td>
+      <input name='password' tabindex='200' type='password'>
+     </td>
+    </tr>
+    <tr>
+     <td>&nbsp;</td>
+     <td>
+      <input type='submit' value='login'>
+     </td>
+    </tr>
+   </table>
+  </form>
+ </div>
+ {% if error is ne none %}
+  <br>
+  {{ error }}
+ {% endif %}
+<br>
+<br>
+</body>
+

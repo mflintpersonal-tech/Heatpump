@@ -1,0 +1,624 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+        .xgauge {
+            width: 320px;
+            height: 280px;
+        }
+        .xgauge2 {
+            width: 200px;
+            height: 152px;
+        }
+        .xgauge3 {
+            width: 160px;
+            height: 120px;
+        }
+
+.battery {
+  border: 3px solid #333;
+  width: 28px;
+  height: 16px;
+  padding: 2px;
+  border-radius: 4px;
+  position: relative;
+  margin: 15px 0;
+  
+  &:before {
+    content: '';
+    height: 8px;
+    width: 3px;
+    background: #333;
+    display: block;
+    position: absolute;
+    top: 1px;
+    right: -6px;
+    border-radius: 0 4px 4px 0;
+  } 
+
+  &:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    border: 1px solid #fff;
+    border-radius: 2px;
+  }
+}
+
+.battery-level {
+  background: #30b455;  
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0px;
+  height: 100%;
+  
+  &.bwarn {
+    background-color: #EFAF13;
+  }
+    
+  &.balert {
+    background-color: #e81309;
+    
+  }
+}
+.btn.btn-mygreen {
+    background-color: lightgreen;
+}
+</style>
+<script src="static/js/raphael-2.1.4.min.js"></script>
+<script src="static/js/justgage.js"></script>
+<!-- script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script -->
+<script src="static/js/bootstrap-toggle.min.js"></script>
+<link href="static/css/bootstrap-toggle.min.css" rel="stylesheet">
+<style>
+/* .btn-default { 
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;  */
+.toggle-handle {
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+</style>
+<div class='container-fluid'>
+  <div class='row g-2'>
+    <div class='col-md mt-3'>
+      <div class='card bg-light'>
+        <div class='card-body'>
+          <div>
+            <div class='row'>
+              <div class='col-md-2'>
+                 {% for t in thermometers %}
+                  <div class="d-flex justify-content-end" style="height: 0px;top: 16px;right: 54px; position:relative;">
+                     <div class="battery" data-bs-toggle="tooltip" title="" >
+                       <div id="{{ [t['id'],'battery']|join }}" class="battery-level" style="width:100%;"></div>
+                     </div>
+                  </div>
+                  <div id="{{ t['id'] }}" class="xgauge3" title="something here"></div>
+                 {% endfor %}
+              </div>
+              <!-- the section to the middle-left holds main thermostat setting area and controls -->
+              <div class='col-md-3'>
+                <div class='row'>
+                  <div class='col'>
+                    <div class='row'>
+                      <div class='text-center' style="font-size: 14px; margin-bottom:0; padding-bottom:0;">MAIN SWITCHES</div>
+                    </div>
+                    <div class='row'>
+                      <div class="d-flex justify-content-center m-0 p-0">
+                        <input id='choff' onChange="switch_updates('ch')" type="checkbox" {% if switches['CH'] == 'OFF' %} checked{% endif %} data-toggle="toggle" data-on="CH OFF" data-off="CH" data-onstyle="danger" data-offstyle="mygreen" data-style="mine" data-width='92'>
+                        <input id='dhwoff' onChange="switch_updates('dhw')" type="checkbox" {% if switches['DHW'] == 'OFF' %} checked{% endif %} data-toggle="toggle" data-on="DHW OFF" data-off="DHW" data-onstyle="danger" data-offstyle="mygreen" data-style="mine" data-width='110'>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!--
+                <div class="d-flex justify-content-start" style="height: 0px;top: 40px; left: 56px; position:relative;">
+                   <div class="battery" style="transform: scale(1.2);">
+                     <div id="masterbattery" class="battery-level" style="width:100%;"></div>
+                   </div>
+                </div>
+                -->
+                <div class='row'>
+                  <div class="d-flex justify-content-end" style="height: 0px;top: 32px;right: 40px; position:relative;">
+                      <img id='heating' style="display:none;" width=48, height=48, src='static/images/fire-unscreen.gif' />
+                  </div>
+                  <span id='target1' style="display:inline-block; position:relative;top:32px;min-height: 1em;">Target: 20°C</span>
+                  <div id="g1" class="w-100 xgauge"></div>
+                </div>
+                <!--
+                <div class='container'>
+                 <div class='row'>
+                  <div class='col-md'>
+                    <fieldset class="border m-2 p-0 w-80" style="background-color: #fce8e8">
+                     <legend style="font-size: 24px; margin-bottom:0;" class="float-none w-auto p-1">Boost</legend>
+                     <div class='row p-1'>
+                       <div class='col-sm'>
+                         <div class='form-check'>
+                           <label class='form-check-label' for='zone1' >Zone 1</label>
+                           <input class='form-check-input' id='zone1' type='checkbox' value='Y'>
+                         </div>
+                       </div>
+                       <div class='col-sm'>
+                         <div class='form-check'>
+                           <label class='form-check-label' for='zone2' >Zone 2</label>
+                           <input class='form-check-input' id='zone2' type='checkbox' value='Y'>
+                         </div>
+                       </div>
+                       <div class='col-sm'>
+                         <div class='form-check'>
+                           <label class='form-check-label' for='dhw' >Hot Water</label>
+                           <input class='form-check-input' id='dhw' type='checkbox' value='Y'>
+                         </div>
+                       </div>
+                     </div>
+                    </fieldset>
+                  </div>
+                 </div>
+                </div>
+                -->
+
+                <div id="holiday" class='mt-4 d-flex justify-content-center'>
+                  <button type="button" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
+                      <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                    </svg>
+                    Set Holiday
+                  </button>
+                </div>
+                <div id="holidayActive" class='d-flex justify-content-center d-none'>
+                  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                    <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                    </symbol>
+                  </svg>
+                  <div class="alert alert-primary d-flex align-items-center p-12 mt-2" role="alert">
+                    <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                    <div>
+                      Holiday Period Active
+                    </div>
+                  </div>
+                </div>
+                <div id="myModalHols" class="modal fade" tabindex="-1" style="display: none;" aria-hidden="true">
+                  <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                     <form action="/ws_update_holidays" method="post">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Enter details for up to three holiday periods</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p class="small">Indicate temperature reduction with respect to normal targets, and a minimum temperature to not drop below.
+                          <br/><i>Reduction applies to Zone 1 ONLY (as Zone 2 is kept quite cold anyway)</i>
+                          <br/>Enter a past start/end date to effectively 'delete' the holiday period.
+                        </p>
+                          <div class="table-scrollable">
+                            <table id="holidays" class="table table-sm table-striped table-bordered text-center">
+                              <thead>
+                                <tr>
+                                  <th>Start Date</th>
+                                  <th>End Date</th>
+                                  <th>Reduction (°C)</th>
+                                  <th>Minimum Temperature (°C)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                               {% for h in holidays %}
+                                <tr>
+                                  <td>
+                                    <input type="date" class="form-control" name='startdate[]' min="2025-01-01" value="{{ h['start_date'] }}"</input>
+                                  </td>
+                                  <td>
+                                    <input type="date" class="form-control" name='enddate[]' min="2025-01-01" value="{{ h['end_date'] }}"</input>
+                                  </td>
+                                  <td>
+                                    <input type="number" step='0.5' min="0" max="10" class="form-control" name='reduction[]' value={{ h['reduction'] }} </input>
+                                  </td>
+                                  <td>
+                                    <input type="number" step='0.5' min="5" max="20" class="form-control" name='minimum[]' value={{ h['minimum'] }} </input>
+                                  </td>
+                                </tr>
+                               {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onClick="form.submit()">Save</button>
+                      </div>
+                     </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- the section to the right holding the external air temp and schedule -->
+              <div class='col-md-7'>
+                <div class='row'>
+                  <div class='col-md-5'>
+                    <div id="g2" class="xgauge2"></div>
+                  </div>
+                  <div class='col-md-2 d-flex align-items-center justify-content-center align-self-end'>
+                    <input id='season' onChange="updates()" type="checkbox" {% if season == 'winter' %}checked{% endif %} data-toggle="toggle" data-on="Winter" data-off="Summer" data-onstyle="primary" data-offstyle="danger">
+                  </div>
+                  <div class='col-md-5'>
+                    <div>
+                      <h4 class='text-center'>Hot Water Period</h4>
+                      <div class='table-scrollable'>
+                        <table id='zw' class='table table-fixed table-sm table-striped table-bordered caption-top text-center'>
+                          <thead class='sticky-top'>
+                            <tr>
+                              <th> </th>
+                              <th>Start</th>
+                              <th>End</th>
+                              <th>Target (°C)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>MON</td>
+                              <td>{{ hw_legionella['start'] }}</td>
+                              <td>{{ hw_legionella['end'] }}</td>
+                              <td>{{ hw_legionella['target']/10 }}</td>
+                            </tr>
+                            <tr>
+                              <td>TUE-SUN</td>
+                              <td>{{ hw_normal['start'] }}</td>
+                              <td>{{ hw_normal['end'] }}</td>
+                              <td>{{ hw_normal['target']/10 }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class='row'>
+                  {% for z in [ ['zone1', 'Zone 1 (Downstairs)'], ['zone2', 'Zone 2 (Upstairs)'] ] %}
+                   <div class='col-md-6'>
+                    <div>
+                      <h4 class='text-center'>{{ z[1] }}</h4>
+                      <div class='table-scrollable'>
+                        <table id='{{ z[0] }}' class='table table-fixed table-sm table-striped table-bordered caption-top text-center'>
+                          <thead class='sticky-top'>
+                            <tr>
+                              <th colspan=2>MON-FRI</th>
+                              <th colspan=2>SAT-SUN</th>
+                            </tr>
+                            <tr>
+                              <th colspan=1>Start Time</th>
+                              <th colspan=1>Target (°C)</th>
+                              <th colspan=1>Start Time</th>
+                              <th colspan=1>Target (°C)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>09:00</td>
+                              <td>15</td>
+                              <td>09:00</td>
+                              <td>15</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                   </div>
+                  {% endfor %}
+                </div>
+                <div id="myModal" class="modal fade" tabindex="-1" style="display: none;" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="formTitle">season schedule, slot n</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form action="/ws_update_schedule" method="post">
+                          <input type="hidden" name='season' id="formSeason">
+                          <input type="hidden" name='days' id="formDays">
+                          <input type="hidden" name='zone' id="formZone">
+                          <input type="hidden" name='slot' id="formSlot">
+                          <div class="mb-3">
+                            <label for="formTime" class="form-label">Start Time</label>
+                            <input type="time" class="form-control" name='time' id="formTime" placeholder="Slot start time">
+                          </div>
+                          <div class="mb-3">
+                            <label for="formTarget" class="form-label">Target</label>
+                            <input type="number" step='0.1' class="form-control" name='target' id="formTarget" placeholder="Target temperature">
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          <button type="button" class="btn btn-primary" onClick="form.submit()">Save changes</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          <script>
+              var heart;
+              var season;
+              var therms = [];
+              var gMaster, gOutside;
+              var choff = 'false'; var dhwoff = 'false';
+
+              document.addEventListener("DOMContentLoaded", function (event) {
+                  gMaster = new JustGage({
+                      id: "g1",
+                      value: {{ master }},
+                      decimals: 1,
+                      width: 320,
+                      height: 320,
+                      min: 0,
+                      max: 40,
+                      donut: true,
+                      donutStartAngle: 0,
+                      gaugeWidthScale: 0.6,
+                      label: 'Zone 1 Control',
+                      labelMaxFontSize: 20,
+                      levelColors: [
+                                    "#0000ff",
+                                    "#ff8000",
+                                    "#ff0000"
+                                   ],
+                      symbol: '°',
+                      hideInnerShadow: true
+                  });
+                  gOutside = new JustGage({
+                      id: "g2",
+                      value: 0,
+                      decimals: 1,
+                      min: -10,
+                      max: 40,
+                      gaugeWidthScale: 0.4,
+                      hideMinMax: true,
+                      label: 'Outside Temperature',
+                      labelMinFontSize: 15,
+                      labelFontColor: 'black',
+                      levelColors: [
+                                    "#0000ff",
+                                    "#ff8000",
+                                    "#ff0000"
+                                   ],
+                      symbol: '°',
+                      hideInnerShadow: false
+                  });
+                  {% for t in thermometers %}
+                  therms.push ( new JustGage({
+                                              id: "{{ t['id'] }}",
+                                              value: {{ t['temperature'] }}/10,
+                                              decimals: 1,
+                                              min: 0,
+                                              max: 40,
+                                              gaugeWidthScale: 0.5,
+                                              hideMinMax: true,
+                                              label: '{{ t['name'] }}',
+                                              labelMinFontSize: 12,
+                                              labelFontColor: 'black',
+                                              levelColors: [
+                                                            "#0000ff",
+                                                            "#ff8000",
+                                                            "#ff0000"
+                                                           ],
+                                              symbol: '°',
+                                              hideInnerShadow: false
+                                            })
+                              )
+                  {% endfor %}
+
+              });
+
+              function updates() {
+
+                  let selected_season = 'Winter';
+                  if ($('#season').is(':checked')){
+                      selected_season = $('#season').attr('data-on')
+                  } else {
+                      selected_season = $('#season').attr('data-off')
+                  };
+                  selected_season = selected_season.toLowerCase();
+
+                  var request = $.ajax({
+                                        type: "GET",
+                                        url: "/ws_updates",
+                                        data: { selected_season },
+                                        dataType: "JSON"
+                                      });
+                  request.done(function(msg) {
+
+                      // heating on/off
+                      if (msg.Heating == 'on') {
+                          $('#heating').fadeIn();
+                      } else {
+                          $('#heating').fadeOut();
+                      };
+
+                      for (let i = 0; i < msg.Temperatures.length; i++) {
+                          let therm = msg.Temperatures[i];
+                          therms[i].refresh(therm.temperature/10);
+                          $('#'+therm.id).attr('title','Humidity:'+(therm.humidity/10)+'%');
+                          //$('#'+therm.id+'battery').parent().tooltip('hide').prop('data-bs-original-title',therm.battery+'%').tooltip('show');
+                          setBattery($('#'+therm.id+'battery'), therm.battery);
+                      };
+
+                      // schedule
+
+                      if (msg.Schedule.holiday == 'True') {
+                        $('#holidayActive').removeClass('d-none d-flex');
+                        $('#holidayActive').addClass('d-flex');
+                        //$("#zone1 tbody, #zone2 tbody").off("click", "td.clicky");
+                        $("#zone1 tbody, #zone2 tbody").css({ 'opacity' : 0.5 });
+                      } else {
+                        $('#holidayActive').removeClass('d-none d-flex');
+                        $('#holidayActive').addClass('d-none');
+                        $("#zone1 tbody, #zone2 tbody").css({ 'opacity' : 1 });
+                      };
+
+                      const d = new Date();
+                      let day = d.getDay();
+                      let cell = ([0,6].includes(day)) ? 3 : 1         /* see if mon-fri or sat-sun */
+                      let hhmm = d.toLocaleTimeString('en-GB').substring(0,5);
+
+                      let season = (d.toLocaleString('en-GB', { timeZoneName: 'short' }).includes('BST')) ? 'summer' : 'winter'
+
+                      gMaster.refresh(msg.Master);
+                      gOutside.refresh(msg.Schedule.oat);
+
+                      let active = msg.Schedule.zones_active;
+                      let z = '&nbsp;'; let t = '';
+                      if (active == '1') {
+                          z += '(zone 1)'; t = 'Target: ' + msg.Schedule.target1/10 + '°C';
+                      } else if (active == '12') {
+                          z += '(zones 1 and 2)'; t = 'Target: ' + msg.Schedule.target1/10 + '°C';
+                      } else if (active == '2') {
+                          z += '(zone 2)'; t = 'Target: ' + msg.Schedule.target2/10 + '°C';
+                      }
+
+                      $('#target1').html(t+z);
+                      //setBattery($('#masterbattery'), msg.Schedule.battery);
+
+                      for (let z = 0; z < msg.Schedule.zones.length; z++) {
+                          let tab = ''
+                          let highlight_row = msg.Schedule.zones[z].times_weekday.length;
+                          let cr = '';
+                          let cl = (msg.Schedule.holiday == 'True') ? '' : 'clicky';
+                          for (let i = 0; i < msg.Schedule.zones[z].times_weekday.length; i++) {
+                              cr = "cell" + z; cr = cr + i;
+                              tab += '<tr><td id="MF'+cr+'time" class="'+cl+'">' + msg.Schedule.zones[z].times_weekday[i][0] + '</td>' 
+                                   +     '<td id="MF'+cr+'target" class="'+cl+'">' + (msg.Schedule.zones[z].times_weekday[i][1]/10).toFixed(1) + '</td>' 
+                                   +     '<td id="SS'+cr+'time" class="'+cl+'">' + msg.Schedule.zones[z].times_weekend[i][0] + '</td>' 
+                                   +     '<td id="SS'+cr+'target" class="'+cl+'">' + (msg.Schedule.zones[z].times_weekend[i][1]/10).toFixed(1) + '</td></tr>' 
+                              if (cell == 1) {   /* test for weekend, from above */
+                                  if (msg.Schedule.zones[z].times_weekday[i][0] < hhmm) highlight_row = i + 1
+                              } else {
+                                  if (msg.Schedule.zones[z].times_weekend[i][0] < hhmm) highlight_row = i + 1
+                              } 
+                          }
+                          $('#zone'+(z + 1)+' > tbody').empty()
+                          $('#zone'+(z + 1)+' > tbody').append(tab)
+
+                          if (selected_season == season) {
+                              $('#zone'+(z + 1)+' > tbody tr:nth-child('+highlight_row+') td:nth-child('+cell+')').addClass("table-active")
+                              $('#zone'+(z + 1)+' > tbody tr:nth-child('+highlight_row+') td:nth-child('+(cell + 1)+')').addClass("table-active")
+                              $('#zone'+(z + 1)+' > tbody tr:nth-child('+highlight_row+') td:nth-child('+cell+')').css("background-color","#fecba1")
+                              $('#zone'+(z + 1)+' > tbody tr:nth-child('+highlight_row+') td:nth-child('+(cell + 1)+')').css("background-color","#fecba1")
+                          }
+                      }
+                      
+                  }),
+                  request.fail(function( jqXHR, textStatus ) {
+                      alert("Failed: Please reload page and try again.");
+                  });
+
+                  heartbeat(60);
+              };
+
+              function switch_updates(type) {
+
+                  res = 'false';
+                  if ($('#'+type+'off').is(':checked')){
+                      res = 'true'
+                  };
+
+                  var request = $.ajax({
+                                        type: "POST",
+                                        url: "/ws_switch_updates",
+                                        data: { type: type, result: res },
+                                        dataType: "JSON"
+                                      });
+                  request.done(function(msg) {
+
+                      if (msg.type == 'ch') {
+                          choff = msg.result;
+                      } else {
+                          dhwoff = msg.result;
+                      };                      
+                  }),
+
+                  request.fail(function( jqXHR, textStatus ) {
+                      alert("Failed: Please reload page and try again.");
+                  });
+
+              };
+
+              // /* heartbeat function (runs every t seconds, on a multiple of t e.g. every minute) */
+              // function heartbeat(t) {
+              //     clearTimeout(heart);
+              //     heart = setTimeout(function(){updates()}, t * 1000);
+              // };
+
+              function heartbeat(t) {
+                  clearTimeout(heart);
+                  let now = new Date();
+                  let timeToNextTick = (t - now.getSeconds()) * 1000 - now.getMilliseconds();
+                  heart = setTimeout(function() {
+                                                 updates();
+                                                }, timeToNextTick);
+               };  
+
+              /* show battery details - 'place' is jQuery object of battery; 'level' is %ge charge */
+              function setBattery(place, level) {
+                  place.css('width',level+'%');
+                  place.removeClass('bwarn balert');
+                  if (level < 10) { 
+                      place.addClass('balert')
+                  } else {
+                      if (level < 25) place.addClass('bwarn')
+                  }
+              };
+
+              var myModalHols = new bootstrap.Modal(document.getElementById('myModalHols'), {focus: true});
+              $("#holiday").on("click", "button", function(){
+                let id = $(this).attr('id');
+                myModalHols.show();
+              });
+
+              var myModal = new bootstrap.Modal(document.getElementById('myModal'), {focus: true});
+              $("#zone1 tbody, #zone2 tbody").on("click", "td.clicky", function(){
+                let id = $(this).attr('id');
+                // "MFcell<mn>time/target"
+                let days = (id.substr(0,2) == 'MF') ? 'Monday-Friday' : 'Saturday-Sunday';
+                let zone = parseInt(id.substr(6,1)) + 1;
+                let slot = parseInt(id.substr(7,1)) + 1;
+                let time, target;
+                if (id.substr(8,) == 'time') {
+                    time = $(this).html();
+                    target = $(this).next().html();
+                } else {
+                    target = $(this).html();
+                    time = $(this).prev().html();
+                };
+                if ($('#season').is(':checked')){
+                    season = $('#season').attr('data-on')
+                } else {
+                    season = $('#season').attr('data-off')
+                };
+                $('#formTitle').html('Zone '+zone+': '+season + ', ' + days + '. Timeslot ' + slot);
+                $('#formTime').val(time);
+                $('#formTarget').val(target);
+
+                $('#formSeason').val(season.toLowerCase());
+                $('#formZone').val(zone);
+                $('#formDays').val(id.substr(0,2));
+                $('#formSlot').val(slot);
+
+                myModal.show();
+              });
+              updates();
+
+          </script>
+          </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

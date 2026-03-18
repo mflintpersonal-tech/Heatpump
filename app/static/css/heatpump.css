@@ -1,0 +1,65 @@
+/*
+    --- override various settings                              
+*/
+
+/* prevent scrolling on large screens (e.g. desktop) */
+@media (min-width: 992px) {
+
+  html, body {
+      height: 100%;
+      overflow-y: hidden; 
+      overflow-x: hidden; 
+  }
+}
+
+.table-scrollable {
+    /* set the height to enable overflow of the table */
+    max-height: 29em;    /* was 32 em - 28/2/25 */
+    overflow-y: auto;
+}
+
+.table-scrollable-short {
+    /* set the height to enable overflow of the table */
+    max-height: 24em;
+}
+
+.table-scrollable thead tr {
+    /* this prevents the table content from showing a few pixels above the header once scrolling starts */
+    /*     --- no idea why; 2px works as does 5px ????  ---    */
+    border-top: 2px black;
+    border-bottom: 2px black;
+}
+
+.table-scrollable thead th {
+    /* Set header to stick to the top of the container. */
+    position: sticky; 
+    top: 0px;
+    
+    /* This is needed otherwise the sticky header will be transparent 
+    */
+    background-color: #eddede;
+
+    margin-top: -1px;
+    margin-bottom: -1px;
+}
+.table-active-current {
+    background-color: #fecba1;
+}
+.form-check {
+    margin-bottom: 0px;
+}
+input.smalldate[type="date"] {
+    max-width: 7em;
+    font-size: 11pt;
+}
+input.mtime[type="time"] {
+    max-width: 8em;
+    font-size: 10pt;
+}
+label.form-check-label {
+    font-size: 11pt;
+    line-height: 0.9em;
+}
+svg.bi:hover {
+  fill: #aaa;
+}

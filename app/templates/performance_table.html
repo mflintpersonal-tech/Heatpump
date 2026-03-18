@@ -1,0 +1,11 @@
+               {% for r in data %}
+                <tr {% if r['date'] == today %}class='table-primary'{% endif %} onClick="window.location='/monitor?performance_date={{ r['date'] }}'">
+                   <td>{{ r['date'] }}</td>
+                   <td><span style="display:block;width:48px;text-align:right">{{ r['I']|perf_figure }}</span></td>
+                   <td><span style="display:block;width:50px;text-align:right">{{ r['O']|perf_figure }}</span></td>
+                   <td>{{ r['I']|cop_show(r['O']) }}</td>
+                   <td>{{ r['W'] }}</td>
+                   <td>{{ r['U'] }}</td>
+                   <td>{{ r['T'] }} ±{{ r['V'] }}</td>
+                </tr>
+               {% endfor %}

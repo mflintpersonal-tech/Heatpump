@@ -1,0 +1,48 @@
+/* Script to scan for BLE advertisement data of some thermomenters (GOVEE variant)
+*/
+const macs = ['a4:c1:38:36:b4:44'];
+
+function ble_handler(event, result){
+  if (event == BLE.Scanner.SCAN_START) {
+    print("Scan started");
+  } else if (event == BLE.Scanner.SCAN_RESULT) {
+    if (macs.indexOf(result.addr) != -1) {
+      //print(result);
+      //print(result.service_uuids["ec88"]);
+      let hex_data = btoh(result.advData);
+      let tt = '0x'+hex_data.slice(52,58);      // isolate temp+humidity
+      let t = Number(tt)/10000;                 // just temperature part
+      let value = Math.floor(t*10)/10;          // round it to 1 decimal place
+      //print(value);
+      
+      /* the BLE scan (currently) runs every few seconds, (and changing interval window on startup doesn't seem to work)
+         so to reduce KVS churn, we store last time it was recorded and don't update more than once every 7 minutes
+      */
+ 
+      let now = Date.now();
+      let now_utc = Math.floor(now/1000);
+      if ( (now_utc - last_kvs) > (7 * 60) ) {
+          last_kvs = now_utc;        
+          /* set KVS value */
+          Shelly.call("KVS.Set",
+                       { key: 'pulse_temp',
+                         value: value
+                       }
+                     );
+      }      
+      
+    }
+  }
+}
+
+var last_kvs = 0;
+
+result = BLE.Scanner.Start( {duration_ms: BLE.Scanner.INFINITE_SCAN,
+                  /*           interval_ms: 500,        /* scan every 500 ms */
+                  /*             window_ms: 50          /* scan for 50 ms */
+                             },   
+                            ble_handler);
+if (result != 0) {
+  print(result);
+}
+
